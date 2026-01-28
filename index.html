@@ -3,93 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Waifu Clicker: Lewd Edition</title>
+    <title>Waifu Clicker: Final Fix</title>
     <style>
-        body { background: #1a1a1a; color: white; text-align: center; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        .stat { font-size: 32px; font-weight: bold; margin-bottom: 20px; color: #ff4081; text-shadow: 0 0 15px rgba(255,64,129,0.7); }
-        #waifu-container { position: relative; cursor: pointer; transition: transform 0.05s; user-select: none; -webkit-tap-highlight-color: transparent; }
-        #waifu-container:active { transform: scale(0.95); filter: brightness(1.2); }
-        #waifu { width: 280px; border-radius: 20px; box-shadow: 0 0 30px rgba(255,64,129,0.3); border: 3px solid #ff4081; }
-        .controls { margin-top: 30px; display: flex; flex-direction: column; gap: 15px; }
-        button { padding: 15px 30px; font-size: 16px; background: linear-gradient(45deg, #ff4081, #ff80ab); border: none; color: white; cursor: pointer; border-radius: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(255,64,129,0.4); }
-        button:disabled { background: #444; box-shadow: none; cursor: not-allowed; }
-        #reset-btn { background: #333; font-size: 10px; margin-top: 20px; opacity: 0.5; border-radius: 5px; padding: 5px; }
+        body { 
+            background: radial-gradient(circle, #2d1b2d 0%, #1a1a1a 100%); 
+            color: white; 
+            text-align: center; 
+            font-family: 'Arial', sans-serif; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+        }
+        .stat-box {
+            background: rgba(255, 64, 129, 0.1);
+            padding: 10px 40px;
+            border-radius: 30px;
+            border: 2px solid #ff4081;
+            box-shadow: 0 0 15px #ff4081;
+            margin-bottom: 20px;
+        }
+        #score { font-size: 36px; font-weight: bold; color: #ff4081; }
+        
+        #waifu-btn {
+            cursor: pointer;
+            transition: transform 0.05s;
+            z-index: 10;
+        }
+        #waifu-btn:active { transform: scale(0.93); }
+        
+        #waifu-img {
+            width: 250px;
+            border-radius: 20px;
+            border: 4px solid #fff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .shop { margin-top: 30px; }
+        
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background: #ff4081;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 5px 0 #c2185b;
+        }
+        button:active { box-shadow: none; transform: translateY(4px); }
+        button:disabled { background: #555; box-shadow: none; transform: none; }
     </style>
 </head>
 <body>
-    <div class="stat">Love Points: <span id="score">0</span></div>
+
+    <div class="stat-box">
+        LP: <span id="score">0</span>
+    </div>
     
-    <div id="waifu-container">
-        <img id="waifu" src="https://i.ibb.co/XfXvX2v/yumina.jpg" alt="Yumina">
+    <div id="waifu-btn">
+        <img id="waifu-img" src="https://i.pinimg.com/736x/72/7a/7d/727a7d032508739665f5735b5a04391e.jpg" alt="Waifu">
     </div>
 
-    <div class="controls">
-        <button id="upgradeBtn" onclick="buyUpgrade()">Автоклик (Ур. <span id="lvl">0</span>) — <span id="cost">10</span> LP</button>
-        <button id="reset-btn" onclick="resetGame()">Сброс прогресса</button>
+    <div class="shop">
+        <button id="upg" onclick="buy()">Автоклик (Ур. <span id="lvl">0</span>) - <span id="cost">10</span> LP</button>
     </div>
 
-    <audio id="clickSound" src="https://files.catbox.moe/97p16v.mp3"></audio>
+    <audio id="snd" src="https://www.myinstants.com/media/sounds/anime-ah.mp3"></audio>
 
     <script>
-        let score = parseFloat(localStorage.getItem('waifu_score')) || 0;
-        let autoClickers = parseInt(localStorage.getItem('waifu_auto')) || 0;
-        let upgradeCost = parseInt(localStorage.getItem('waifu_cost')) || 10;
+        let score = parseInt(localStorage.getItem('v3_score')) || 0;
+        let lv = parseInt(localStorage.getItem('v3_lv')) || 0;
+        let price = parseInt(localStorage.getItem('v3_price')) || 10;
 
-        const scoreDisplay = document.getElementById('score');
-        const upgradeBtn = document.getElementById('upgradeBtn');
-        const lvlDisplay = document.getElementById('lvl');
-        const costDisplay = document.getElementById('cost');
-        const clickSound = document.getElementById('clickSound');
-        const waifuContainer = document.getElementById('waifu-container');
+        const sDisp = document.getElementById('score');
+        const lDisp = document.getElementById('lvl');
+        const cDisp = document.getElementById('cost');
+        const btnUpg = document.getElementById('upg');
+        const audio = document.getElementById('snd');
 
-        waifuContainer.onclick = () => {
+        function update() {
+            sDisp.innerText = Math.floor(score);
+            lDisp.innerText = lv;
+            cDisp.innerText = price;
+            btnUpg.disabled = score < price;
+            localStorage.setItem('v3_score', score);
+            localStorage.setItem('v3_lv', lv);
+            localStorage.setItem('v3_price', price);
+        }
+
+        document.getElementById('waifu-btn').onclick = () => {
             score++;
-            // Сбрасываем звук, чтобы можно было кликать быстро
-            clickSound.currentTime = 0;
-            clickSound.play().catch(e => console.log("Нужно кликнуть по экрану для активации звука"));
-            updateDisplay();
-            saveData();
+            audio.currentTime = 0;
+            audio.play().catch(() => { console.log("Кликни активнее для звука!"); });
+            update();
         };
 
-        function buyUpgrade() {
-            if (score >= upgradeCost) {
-                score -= upgradeCost;
-                autoClickers++;
-                upgradeCost = Math.round(upgradeCost * 1.6);
-                updateDisplay();
-                saveData();
-            }
-        }
-
-        function updateDisplay() {
-            scoreDisplay.innerText = Math.floor(score);
-            lvlDisplay.innerText = autoClickers;
-            costDisplay.innerText = upgradeCost;
-            upgradeBtn.disabled = score < upgradeCost;
-        }
-
-        function saveData() {
-            localStorage.setItem('waifu_score', score);
-            localStorage.setItem('waifu_auto', autoClickers);
-            localStorage.setItem('waifu_cost', upgradeCost);
-        }
-
-        function resetGame() {
-            if(confirm("Весь прогресс будет утерян. Уверен?")) {
-                localStorage.clear();
-                location.reload();
+        function buy() {
+            if (score >= price) {
+                score -= price;
+                lv++;
+                price = Math.round(price * 1.5);
+                update();
             }
         }
 
         setInterval(() => {
-            if (autoClickers > 0) {
-                score += autoClickers;
-                updateDisplay();
-                saveData();
+            if (lv > 0) {
+                score += lv;
+                update();
             }
         }, 1000);
 
-        updateDisplay();
+        update();
     </script>
 </body>
 </html>
