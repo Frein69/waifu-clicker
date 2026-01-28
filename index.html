@@ -3,25 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Waifu Clicker</title>
+    <title>Waifu Clicker Gold</title>
     <style>
-        body { background: #1a1a1a; color: white; text-align: center; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; overflow: hidden; }
-        #game { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 90vh; }
-        .stat { font-size: 28px; font-weight: bold; margin-bottom: 20px; color: #ff4081; text-shadow: 0 0 10px rgba(255,64,129,0.5); }
-        #waifu { width: 280px; cursor: pointer; transition: transform 0.1s; user-select: none; -webkit-tap-highlight-color: transparent; }
-        #waifu:active { transform: scale(0.92); }
-        .controls { margin-top: 30px; }
-        button { padding: 15px 25px; font-size: 16px; background: #ff4081; border: none; color: white; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 15px rgba(255,64,129,0.4); }
-        button:disabled { background: #555; box-shadow: none; cursor: not-allowed; }
+        body { background: #1a1a1a; color: white; text-align: center; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        .stat { font-size: 32px; font-weight: bold; margin-bottom: 20px; color: #ff4081; text-shadow: 0 0 15px rgba(255,64,129,0.7); }
+        #waifu-container { position: relative; cursor: pointer; transition: transform 0.1s; }
+        #waifu-container:active { transform: scale(0.9); }
+        #waifu { width: 300px; border-radius: 20px; box-shadow: 0 0 30px rgba(255,64,129,0.3); }
+        .controls { margin-top: 30px; display: flex; flex-direction: column; gap: 15px; }
+        button { padding: 15px 30px; font-size: 18px; background: linear-gradient(45deg, #ff4081, #ff80ab); border: none; color: white; cursor: pointer; border-radius: 15px; font-weight: bold; box-shadow: 0 4px 15px rgba(255,64,129,0.4); transition: 0.3s; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,64,129,0.6); }
+        button:disabled { background: #444; box-shadow: none; cursor: not-allowed; transform: none; }
     </style>
 </head>
 <body>
-    <div id="game">
-        <div class="stat">Love Points: <span id="score">0</span></div>
-        <img id="waifu" src="https://via.placeholder.com/280x450/ff4081/ffffff?text=CLICK+ME" alt="Waifu">
-        <div class="controls">
-            <button id="upgradeBtn" onclick="buyUpgrade()">Купить Автоклик (10 LP)</button>
-        </div>
+    <div class="stat">Love Points: <span id="score">0</span></div>
+    
+    <div id="waifu-container">
+        <img id="waifu" src="https://i.pinimg.com/originals/72/7a/7d/727a7d032508739665f5735b5a04391e.jpg" alt="Waifu">
+    </div>
+
+    <div class="controls">
+        <button id="upgradeBtn" onclick="buyUpgrade()">Купить Автоклик (10 LP)</button>
+        <button id="bonusBtn" style="background: #4caf50;" onclick="showBonus()">Секретный Бонус</button>
     </div>
 
     <script>
@@ -31,9 +35,9 @@
 
         const scoreDisplay = document.getElementById('score');
         const upgradeBtn = document.getElementById('upgradeBtn');
-        const waifu = document.getElementById('waifu');
+        const waifuContainer = document.getElementById('waifu-container');
 
-        waifu.onclick = () => {
+        waifuContainer.onclick = () => {
             score++;
             updateDisplay();
         };
@@ -47,8 +51,14 @@
             }
         }
 
+        function showBonus() {
+            alert("Скоро здесь будет реклама, которая принесет тебе деньги! А пока лови +50 очков!");
+            score += 50;
+            updateDisplay();
+        }
+
         function updateDisplay() {
-            scoreDisplay.innerText = score;
+            scoreDisplay.innerText = Math.floor(score);
             upgradeBtn.innerText = `Купить Автоклик (${upgradeCost} LP)`;
             upgradeBtn.disabled = score < upgradeCost;
         }
