@@ -2,62 +2,142 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Waifu Clicker: Emilia Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Emilia Clicker: Definitive Edition</title>
     <style>
+        :root { --pink: #ff4081; --dark: #1a1a2e; }
+        
         body { 
-            /* Фон: глубокий фиолетовый градиент */
             background: radial-gradient(circle, #2d1b2d 0%, #111111 100%); 
-            color: white; text-align: center; font-family: 'Arial', sans-serif; 
-            margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; 
+            color: white; text-align: center; font-family: 'Segoe UI', sans-serif; 
+            margin: 0; display: flex; flex-direction: column; align-items: center; 
+            justify-content: center; height: 100vh; overflow: hidden; touch-action: manipulation;
         }
-        .stat-box {
-            background: rgba(255, 64, 129, 0.2); padding: 10px 40px; border-radius: 30px;
-            border: 2px solid #ff4081; box-shadow: 0 0 15px #ff4081; margin-bottom: 20px;
+
+        /* Контейнер очков */
+        .score-container {
+            background: rgba(0, 0, 0, 0.6); padding: 10px 40px; border-radius: 50px;
+            border: 2px solid var(--pink); box-shadow: 0 0 20px rgba(255, 64, 129, 0.4);
+            margin-bottom: 20px; z-index: 2;
         }
-        #score { font-size: 36px; font-weight: bold; color: #ff4081; }
-        #waifu-btn { cursor: pointer; transition: transform 0.05s; }
-        #waifu-btn:active { transform: scale(0.95); }
-        #waifu-img { width: 260px; border-radius: 20px; border: 4px solid #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .shop { margin-top: 30px; }
+        #score { font-size: 42px; font-weight: bold; color: var(--pink); text-shadow: 0 0 10px var(--pink); }
+
+        /* Эмилия */
+        #waifu-box { 
+            position: relative; cursor: pointer; transition: transform 0.05s; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        #waifu-box:active { transform: scale(0.95); }
+        
+        #waifu-img { 
+            width: auto; height: 45vh; max-width: 90vw; border-radius: 25px; 
+            border: 4px solid white; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            object-fit: contain;
+        }
+
+        /* Гнев при клике */
+        .hit { filter: sepia(100%) saturate(300%) hue-rotate(-50deg) brightness(0.8) !important; }
+
+        /* Панель управления */
+        .panel {
+            background: rgba(0, 0, 0, 0.8); padding: 20px; border-radius: 25px;
+            margin-top: 25px; width: 300px; border: 1px solid #333;
+        }
+        
         button {
-            padding: 15px 30px; font-size: 18px; background: #ff4081; color: white;
-            border: none; border-radius: 50px; cursor: pointer; font-weight: bold;
+            width: 100%; padding: 15px; background: var(--pink); color: white;
+            border: none; border-radius: 15px; cursor: pointer; font-weight: bold;
+            font-size: 18px; transition: 0.2s;
         }
+        button:disabled { background: #444; cursor: not-allowed; opacity: 0.5; }
+        
+        .vol-control { margin-top: 15px; font-size: 14px; color: #bbb; }
+        input[type=range] { width: 100%; accent-color: var(--pink); cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="stat-box">LP: <span id="score">0</span></div>
-    <div id="waifu-btn"><img id="waifu-img" src="waifu.jpg" alt="Emilia"></div>
-    <div class="shop"><button id="upg" onclick="buy()">Автоклик (Ур. <span id="lvl">0</span>) - <span id="cost">10</span> LP</button></div>
-    <audio id="snd" src="https://www.myinstants.com/media/sounds/anime-ah.mp3"></audio>
+
+    <div class="score-container">
+        <div id="score">0</div>
+    </div>
+    
+    <div id="waifu-box">
+        <img id="waifu-img" src="waifu.jpg" alt="Emilia">
+    </div>
+
+    <div class="panel">
+        <button id="buyBtn" onclick="buyUpgrade()">Автоклик: Ур. <span id="lvl">0</span> (Цена: <span id="cost">10</span>)</button>
+        
+        <div class="vol-control">
+            Громкость: <input type="range" id="volume" min="0" max="1" step="0.1" value="0.3">
+        </div>
+        <div style="font-size: 10px; color: #666; margin-top: 10px;">Клик или ПРОБЕЛ</div>
+    </div>
+
     <script>
-        let score = parseInt(localStorage.getItem('v5_score')) || 0;
-        let lv = parseInt(localStorage.getItem('v5_lv')) || 0;
-        let price = parseInt(localStorage.getItem('v5_price')) || 10;
-        const sDisp = document.getElementById('score');
-        const lDisp = document.getElementById('lvl');
-        const cDisp = document.getElementById('cost');
-        const audio = document.getElementById('snd');
-        function update() {
-            sDisp.innerText = Math.floor(score);
-            lDisp.innerText = lv;
-            cDisp.innerText = price;
-            localStorage.setItem('v5_score', score);
-            localStorage.setItem('v5_lv', lv);
-            localStorage.setItem('v5_price', price);
-        }
-        document.getElementById('waifu-btn').onclick = () => {
-            score++;
-            audio.currentTime = 0;
-            audio.play().catch(() => {});
-            update();
+        // Состояние игры
+        let state = {
+            score: parseInt(localStorage.getItem('ems_score')) || 0,
+            lvl: parseInt(localStorage.getItem('ems_lvl')) || 0,
+            cost: parseInt(localStorage.getItem('ems_cost')) || 10
         };
-        function buy() {
-            if (score >= price) { score -= price; lv++; price = Math.round(price * 1.5); update(); }
+
+        const sounds = [
+            'https://www.myinstants.com/media/sounds/tuturu_1.mp3',
+            'https://www.myinstants.com/media/sounds/anime-wow-sound-effect.mp3',
+            'https://www.myinstants.com/media/sounds/baka.mp3',
+            'https://www.myinstants.com/media/sounds/kawaii_2.mp3'
+        ];
+
+        function clickAction() {
+            state.score++;
+            
+            // Звук
+            const audio = new Audio(sounds[Math.floor(Math.random() * sounds.length)]);
+            audio.volume = document.getElementById('volume').value;
+            audio.play().catch(()=>{});
+
+            // Визуал
+            const img = document.getElementById('waifu-img');
+            img.classList.add('hit');
+            setTimeout(() => img.classList.remove('hit'), 100);
+            
+            updateUI();
         }
-        setInterval(() => { if (lv > 0) { score += lv; update(); } }, 1000);
-        update();
+
+        // Управление: Мышь/Тач и Клавиатура (Пробел)
+        document.getElementById('waifu-box').onclick = clickAction;
+        window.addEventListener('keydown', (e) => { if(e.code === "Space") { e.preventDefault(); clickAction(); } });
+
+        function buyUpgrade() {
+            if (state.score >= state.cost) {
+                state.score -= state.cost;
+                state.lvl++;
+                state.cost = Math.round(state.cost * 1.6);
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('score').innerText = Math.floor(state.score);
+            document.getElementById('lvl').innerText = state.lvl;
+            document.getElementById('cost').innerText = state.cost;
+            document.getElementById('buyBtn').disabled = state.score < state.cost;
+            
+            localStorage.setItem('ems_score', state.score);
+            localStorage.setItem('ems_lvl', state.lvl);
+            localStorage.setItem('ems_cost', state.cost);
+        }
+
+        // Автоклик каждые 100мс для плавности
+        setInterval(() => {
+            if (state.lvl > 0) {
+                state.score += (state.lvl / 10);
+                updateUI();
+            }
+        }, 100);
+
+        updateUI();
     </script>
 </body>
 </html>
