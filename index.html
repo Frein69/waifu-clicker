@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waifu Clicker</title>
+    <style>
+        body { background: #1a1a1a; color: white; text-align: center; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; overflow: hidden; }
+        #game { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 90vh; }
+        .stat { font-size: 28px; font-weight: bold; margin-bottom: 20px; color: #ff4081; text-shadow: 0 0 10px rgba(255,64,129,0.5); }
+        #waifu { width: 280px; cursor: pointer; transition: transform 0.1s; user-select: none; -webkit-tap-highlight-color: transparent; }
+        #waifu:active { transform: scale(0.92); }
+        .controls { margin-top: 30px; }
+        button { padding: 15px 25px; font-size: 16px; background: #ff4081; border: none; color: white; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 15px rgba(255,64,129,0.4); }
+        button:disabled { background: #555; box-shadow: none; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div id="game">
+        <div class="stat">Love Points: <span id="score">0</span></div>
+        <img id="waifu" src="https://via.placeholder.com/280x450/ff4081/ffffff?text=CLICK+ME" alt="Waifu">
+        <div class="controls">
+            <button id="upgradeBtn" onclick="buyUpgrade()">Купить Автоклик (10 LP)</button>
+        </div>
+    </div>
+
+    <script>
+        let score = 0;
+        let autoClickers = 0;
+        let upgradeCost = 10;
+
+        const scoreDisplay = document.getElementById('score');
+        const upgradeBtn = document.getElementById('upgradeBtn');
+        const waifu = document.getElementById('waifu');
+
+        waifu.onclick = () => {
+            score++;
+            updateDisplay();
+        };
+
+        function buyUpgrade() {
+            if (score >= upgradeCost) {
+                score -= upgradeCost;
+                autoClickers++;
+                upgradeCost = Math.round(upgradeCost * 1.5);
+                updateDisplay();
+            }
+        }
+
+        function updateDisplay() {
+            scoreDisplay.innerText = score;
+            upgradeBtn.innerText = `Купить Автоклик (${upgradeCost} LP)`;
+            upgradeBtn.disabled = score < upgradeCost;
+        }
+
+        setInterval(() => {
+            if (autoClickers > 0) {
+                score += autoClickers;
+                updateDisplay();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
